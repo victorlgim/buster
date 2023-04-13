@@ -1,5 +1,5 @@
 from rest_framework.views import APIView, Request, Response, status
-from .serializers import (UserSerializer, CustomJWTSerializer, UserSpecificEditSerializer, UserSpecificSerializer,)
+from .serializers import (UserSerializer, CustomJWTSerializer, UserProfile, UserSpecificSerializer,)
 from rest_framework_simplejwt.views import TokenObtainPairView
 from .models import User
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
@@ -30,7 +30,7 @@ class UserSpecificView(APIView):
 
     def patch(self, request, user_id):
         user = User.objects.get(id=user_id)
-        serializer = UserSpecificEditSerializer(user, data=request.data, context={"request": request, "user_id": user_id})
+        serializer = UserProfile(user, data=request.data, context={"request": request, "user_id": user_id})
         if serializer.is_valid():
             user = serializer.update(User.objects.get(pk=user_id), serializer.validated_data)
             return Response(UserSpecificSerializer(user).data, status=200)

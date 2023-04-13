@@ -6,7 +6,6 @@ from rest_framework.exceptions import AuthenticationFailed
 from django.core.exceptions import PermissionDenied
 from django.contrib.auth.hashers import make_password
 
-
 class CustomJWTSerializer(TokenObtainPairSerializer):
     @classmethod
     def get_token(cls, user):
@@ -66,7 +65,7 @@ class UserSpecificSerializer(serializers.ModelSerializer):
         raise AuthenticationFailed("Você não tem permissão para acessar este usuário")
 
 
-class UserSpecificEditSerializer(serializers.ModelSerializer):
+class UserProfile(serializers.ModelSerializer):
     username = serializers.CharField(
         validators=[UniqueValidator(queryset=User.objects.all(), message="username already taken.")],
         required=False,
