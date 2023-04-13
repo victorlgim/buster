@@ -1,17 +1,15 @@
-from rest_framework import permissions
+from rest_framework_simplejwt.authentication import JWTAuthentication
+from rest_framework.exceptions import PermissionDenied
 from users.models import User
 
 
-class IsEmployee(permissions.BasePermission):
-    def has_permission(self, request, _):
-        return (
-            request.method in permissions.SAFE_METHODS
-            or request.user.is_authenticated
-            and request.user.is_employee
-        )
+class UserOrEmployeeJWTAuthentication(JWTAuthentication):
+    def authenticate(self, request):
 
-   
-class IsUser(permissions.BasePermission):
-    def has_object_permission(self, request, _, obj):
-        return request.user.is_employee or obj == request.user
-        
+        authenticated_user = super().authenticate(request)
+        if authenticated_user is None:
+            return None
+        user, token = authenticated_user
+        if not user.is_employee:
+            raise PermissionDenied("Usuário não é um funcionário")
+        return user, token

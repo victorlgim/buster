@@ -1,48 +1,37 @@
-from users.models import User
-from users.serializers import UserSerializer
-from rest_framework.views import APIView, Response, status
-from django.shortcuts import get_object_or_404
+from rest_framework.views import APIView, Request, Response, status
+from .serializers import (UserSerializer, CustomJWTSerializer, UserSpecificEditSerializer, UserSpecificSerializer,)
+from rest_framework_simplejwt.views import TokenObtainPairView
+from .models import User
+from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework_simplejwt.authentication import JWTAuthentication
-from users.permissions import IsUser
-from rest_framework.permissions import IsAuthenticated
 
+class LoginView(TokenObtainPairView):
+    serializer_class = CustomJWTSerializer
 
 class UserView(APIView):
+    authentication_classes = []
+    permission_classes = []
+
     def post(self, request):
         serializer = UserSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-
         serializer.save()
+        return Response(serializer.data, status=201)
 
-        return Response(serializer.data, status.HTTP_201_CREATED)
-
-    def get(self):
-        users = User.objects.all()
-        serializer = UserSerializer(users, many=True)
-
-        return Response(serializer.data, status.HTTP_200_OK)
-
-
-class UserDetailView(APIView):
+class UserSpecificView(APIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated, IsUser]
+    permission_classes = [IsAuthenticatedOrReadOnly]
 
     def get(self, request, user_id):
-        user = get_object_or_404(User, id=user_id)
-
-        self.check_object_permissions(request, user)
-        serializer = UserSerializer(user)
-
-        return Response(serializer.data, status.HTTP_200_OK)
-
+        serializer = UserSpecificSerializer(data=request.data, context={"request": request, "user_id": user_id})
+        if serializer.is_valid():
+            return Response(serializer.data, status=200)
+        return Response(serializer.errors, status=400)
 
     def patch(self, request, user_id):
-        user = get_object_or_404(User, id=user_id)
-
-        self.check_object_permissions(request, user)
-        
-        serializer = UserSerializer(user, request.data, partial=True)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-
-        return Response(serializer.data, status.HTTP_200_OK)
+        user = User.objects.get(id=user_id)
+        serializer = UserSpecificEditSerializer(user, data=request.data, context={"request": request, "user_id": user_id})
+        if serializer.is_valid():
+            user = serializer.update(User.objects.get(pk=user_id), serializer.validated_data)
+            return Response(UserSpecificSerializer(user).data, status=200)
+        return Response(serializer.errors, status=403)

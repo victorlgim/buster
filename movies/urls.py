@@ -1,9 +1,9 @@
 from django.urls import path
-from movies.views import MovieView, MovieDetailView, OrderMovieView
-
+from . import views
+from rest_framework_simplejwt import views as jwt_views
 
 urlpatterns = [
-    path('movies/', MovieView.as_view()),
-    path('movies/<int:movie_id>/', MovieDetailView.as_view()),
-    path('movies/<int:movie_id>/orders/', OrderMovieView.as_view())
+    path("movies/", views.MovieView.as_view()),
+    path("movies/<int:movie_id>/", views.MovieSpecificView.as_view()),
+    path("movies/<int:movie_id>/orders/", views.MovieOrderView.as_view()),
 ]

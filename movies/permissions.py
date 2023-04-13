@@ -1,7 +1,13 @@
-from rest_framework import permissions
+from rest_framework_simplejwt.authentication import JWTAuthentication
+from rest_framework.exceptions import PermissionDenied
 
-class IsMovieUser(permissions.BasePermission):
-    def has_object_permission(self, request, _, movie):
+class AdminJWTAuthentication(JWTAuthentication):
+    def authenticate(self, request):
 
-        return movie.user == request.user
-
+        authenticated_user = super().authenticate(request)
+        if authenticated_user is None:
+            return None
+        user, token = authenticated_user
+        if not user.is_employee:
+            raise PermissionDenied("Usuário não é um administrador")
+        return user, token
